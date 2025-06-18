@@ -1,0 +1,37 @@
+# 工作流名称
+name: Sync Upstream
+
+# 触发条件
+on:
+  schedule:
+    # 使用 cron 语法，表示每小时的第0分钟执行一次
+    # 你可以根据需求修改，例如每天执行一次: '0 0 * * *'
+    - cron: '0 * * * *'
+  workflow_dispatch:
+    # 这行允许你从 Actions 页面手动触发此工作流
+
+# 任务
+jobs:
+  sync:
+    runs-on: ubuntu-latest # 使用最新的 Ubuntu 运行环境
+    steps:
+      # 第一步：获取你的仓库代码
+      - name: Checkout target repository
+        uses: actions/checkout@v4
+        with:
+          # 我们需要个人访问令牌（PAT）来推送到仓库
+          # GITHUB_TOKEN 是 GitHub 自动提供的，但它对其他工作流没有触发权限
+          # 为了确保同步后能触发其他可能存在的 Action，建议使用 PAT
+          token: ${{ secrets.PAT_FOR_SYNC }}
+          fetch-depth: 0 # 获取所有历史记录，以便进行合并
+
+      # 第二步：执行同步操作
+      - name: Sync with upstream repository
+        uses: a-b-v/actions-sync-fork@v1.2
+        with:
+          # 必需：你的 GitHub 令牌
+          github_token: ${{ secrets.PAT_FOR_SYNC }}
+          upstream_repository: "sgl-project/sglang"
+          upstream_branch: "main"
+          target_branch: "main"
+          force: false
